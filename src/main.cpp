@@ -10,16 +10,19 @@
 #define _DEBUG
 
 #include "vex.h"
-#include "input.hpp"
 #include "auton.hpp"
 #include "manual.hpp"
 
-using namespace vex;
-
 // A global instance of competition
-competition Competition;
+vex::competition Competition;
 
-// define your global instances of motors and other devices here
+vex::motor FrontLeft(vex::PORT1);
+vex::motor FrontRight(vex::PORT10, true);
+vex::motor BackLeft(vex::PORT2);
+vex::motor BackRight(vex::PORT9, true);
+
+vex::motor_group MotorGroupLeft(FrontLeft, BackLeft);
+vex::motor_group MotorGroupRight(FrontRight, BackRight);
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -65,17 +68,14 @@ void autonomous(void) {
 
 void usercontrol(void) {
   // User control code here, inside the loop
-  while (1) {
-    // This is the main execution loop for the user control program.
-    // Each time through the loop your program should update motor + servo
-    // values based on feedback from the joysticks.
-    // ........................................................................
-    // Insert user code here. This is where you use the joystick values to
-    // update your motors, etc.
-    // ........................................................................
+  vex::controller Controller;
+  Manual manual(&Controller, &MotorGroupLeft, &MotorGroupRight);
 
-    wait(20, msec); // Sleep the task for a short amount of time to
-                    // prevent wasted resources.
+  while (1) {
+    manual.Run();
+
+    wait(20, vex::msec); // Sleep the task for a short amount of time to
+                         // prevent wasted resources.
   }
 }
 
@@ -92,6 +92,6 @@ int main() {
 
   // Prevent main from exiting with an infinite loop.
   while (true) {
-    wait(100, msec);
+    wait(100, vex::msec);
   }
 }
