@@ -10,8 +10,8 @@
 #define _DEBUG
 
 #include "vex.h"
-#include "auton.hpp"
-#include "manual.hpp"
+#include "auton.h" 
+#include "manual.h"
 
 // A global instance of competition
 vex::competition Competition;
@@ -23,6 +23,8 @@ vex::motor BackRight(vex::PORT9, true);
 
 vex::motor_group MotorGroupLeft(FrontLeft, BackLeft);
 vex::motor_group MotorGroupRight(FrontRight, BackRight);
+
+vex::motor IntakeMotor(vex::PORT7);
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -69,7 +71,7 @@ void autonomous(void) {
 void usercontrol(void) {
   // User control code here, inside the loop
   vex::controller Controller;
-  Manual manual(&Controller, &MotorGroupLeft, &MotorGroupRight);
+  Manual manual(&Controller, &MotorGroupLeft, &MotorGroupRight, &IntakeMotor);
 
   while (1) {
     manual.Run();

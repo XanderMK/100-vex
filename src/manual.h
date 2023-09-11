@@ -3,7 +3,7 @@
 
 class Manual {
 public:
-    Manual(vex::controller* Controller, vex::motor_group* MotorGroupLeft, vex::motor_group* MotorGroupRight);
+    Manual(vex::controller* Controller, vex::motor_group* MotorGroupLeft, vex::motor_group* MotorGroupRight, vex::motor* IntakeMotor);
     ~Manual(void);
 
     void Run();
@@ -11,8 +11,10 @@ public:
 private:
     void Move();
     void ControlMotorGroup(vex::motor_group* MotorGroup, const vex::controller::axis& ControllerAxis);
+    void ControlIntake();
 
     vex::controller* Controller;
     vex::motor_group* MotorGroupLeft;
     vex::motor_group* MotorGroupRight;
+    vex::motor* IntakeMotor;
 };
