@@ -16,15 +16,20 @@
 // A global instance of competition
 vex::competition Competition;
 
-vex::motor FrontLeft(vex::PORT1);
-vex::motor FrontRight(vex::PORT10, true);
-vex::motor BackLeft(vex::PORT2);
+vex::motor FrontLeft(vex::PORT2);
+vex::motor FrontRight(vex::PORT1, true);
+vex::motor BackLeft(vex::PORT10);
 vex::motor BackRight(vex::PORT9, true);
 
 vex::motor_group MotorGroupLeft(FrontLeft, BackLeft);
 vex::motor_group MotorGroupRight(FrontRight, BackRight);
 
-vex::motor IntakeMotor(vex::PORT7);
+vex::motor IntakeMotor(vex::PORT5);
+
+vex::motor LiftMotor(vex::PORT4);
+vex::motor ClawMotor(vex::PORT6);
+
+
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -71,7 +76,8 @@ void autonomous(void) {
 void usercontrol(void) {
   // User control code here, inside the loop
   vex::controller Controller;
-  Manual manual(&Controller, &MotorGroupLeft, &MotorGroupRight, &IntakeMotor);
+  Manual manual(&Controller, &MotorGroupLeft, &MotorGroupRight, &IntakeMotor, &LiftMotor, &ClawMotor);
+
 
   while (1) {
     manual.Run();
