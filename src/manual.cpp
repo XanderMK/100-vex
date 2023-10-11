@@ -1,14 +1,10 @@
 #include "manual.h"
 #include "vex.h"
+#include "utils.h"
 #include <cmath>
-#include <iostream>
 
-Manual::Manual(vex::controller* Controller, 
-               vex::motor_group* MotorGroupLeft, 
-               vex::motor_group* MotorGroupRight, 
-               vex::motor* IntakeMotor,
-               vex::motor* LiftMotor,
-               vex::motor* ClawMotor) {
+Manual::Manual(vex::controller* Controller, vex::motor_group* MotorGroupLeft, vex::motor_group* MotorGroupRight, 
+               vex::motor* IntakeMotor, vex::motor* LiftMotor, vex::motor* ClawMotor) {
     this->Controller = Controller;
     this->MotorGroupLeft = MotorGroupLeft;
     this->MotorGroupRight = MotorGroupRight;
@@ -16,7 +12,7 @@ Manual::Manual(vex::controller* Controller,
     this->LiftMotor = LiftMotor;
     this->ClawMotor = ClawMotor;
 
-    this->IntakeSpeed = 75;
+    IntakeMotor->setVelocity(IntakeSpeed, vex::percent);
 }
 
 Manual::~Manual(void) {
@@ -40,24 +36,45 @@ void Manual::Move() {
 }
 
 void Manual::ControlMotorGroup(vex::motor_group* MotorGroup, const vex::controller::axis& ControllerAxis) {
+    static float currentDriveInterval = 1.f;
+
     float axisPosition = ControllerAxis.position(vex::percent);
+    float motorGroupSpeed = axisPosition * lerp(MinDrivePercent, MaxDrivePercent, currentDriveInterval);
+
     bool driveReverse = axisPosition < 0;
 
     if (axisPosition != 0) {
-        MotorGroup->setVelocity(std::abs(axisPosition), vex::percent);
+        MotorGroup->setVelocity(std::abs(motorGroupSpeed), vex::percent);
         MotorGroup->spin(driveReverse ? vex::reverse : vex::forward);
     } else {
         MotorGroup->stop();
     }
+
+
+    // Toggles for changing drivetrain speed
+    static bool buttonUpLatch = false;
+    static bool buttonDownLatch = false;
+    if (Controller->ButtonUp.pressing() && !buttonUpLatch && currentDriveInterval <= MaxDrivePercent) 
+        currentDriveInterval += (MaxDrivePercent - MinDrivePercent) / DriveIntervals;
+    else if (Controller->ButtonDown.pressing() && !buttonDownLatch && currentDriveInterval >= MinDrivePercent) 
+        currentDriveInterval -= (MaxDrivePercent - MinDrivePercent) / DriveIntervals;
+
+    
+    // Make sure buttons can't toggle things every cycle
+    if (Controller->ButtonUp.pressing() && !buttonUpLatch) {
+        buttonUpLatch = true;
+    } else {
+        buttonUpLatch = false;
+    }
+
+    if (Controller->ButtonDown.pressing() && !buttonDownLatch) {
+        buttonDownLatch = true;
+    } else {
+        buttonDownLatch = false;
+    }
 }
 
 void Manual::ControlIntake() {
-  // Set intake speed
-  if (Controller->ButtonUp.pressing()) IntakeSpeed = 100;
-  else if (Controller->ButtonRight.pressing()) IntakeSpeed = 75;
-  else if (Controller->ButtonLeft.pressing()) IntakeSpeed = 50;
-  else if (Controller->ButtonDown.pressing()) IntakeSpeed = 25;
-  
   IntakeMotor->setVelocity(IntakeSpeed, vex::percent);
 
   // Move intake motor
@@ -68,7 +85,7 @@ void Manual::ControlIntake() {
     IntakeMotor->spin(vex::forward);
   }
   else {
-    IntakeMotor->stop();
+    IntakeMotor->stop(vex::hold);
   }
 }
 
@@ -80,7 +97,7 @@ void Manual::ControlLift() {
     LiftMotor->spin(vex::reverse);
   }
   else {
-    LiftMotor->stop();
+    LiftMotor->stop(vex::hold);
   }
 
   if (Controller->ButtonA.pressing()) {
@@ -90,6 +107,6 @@ void Manual::ControlLift() {
     ClawMotor->spin(vex::reverse);
   }
   else {
-    ClawMotor->stop();
+    ClawMotor->stop(vex::hold);
   }
 }

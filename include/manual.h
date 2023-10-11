@@ -26,5 +26,9 @@ private:
     vex::motor* LiftMotor;
     vex::motor* ClawMotor;
 
-    int IntakeSpeed;
+
+    const float MaxDrivePercent = .7f;
+    const float MinDrivePercent = .25f;
+    const int DriveIntervals = 4;
+    const int IntakeSpeed = 15;
 };
