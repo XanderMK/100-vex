@@ -16,6 +16,8 @@
 // A global instance of competition
 vex::competition Competition;
 
+vex::brain Brain;
+
 vex::motor FrontLeft(vex::PORT2);
 vex::motor FrontRight(vex::PORT1, true);
 vex::motor BackLeft(vex::PORT10);
@@ -28,8 +30,6 @@ vex::motor IntakeMotor(vex::PORT5);
 
 vex::motor LiftMotor(vex::PORT4);
 vex::motor ClawMotor(vex::PORT6);
-
-
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -58,7 +58,7 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  Auton auton(&MotorGroupLeft, &MotorGroupRight, &IntakeMotor, &LiftMotor, &ClawMotor);
+  Auton auton(&Brain, &MotorGroupLeft, &MotorGroupRight, &IntakeMotor, &LiftMotor, &ClawMotor);
   auton.Run();
 }
 
@@ -75,8 +75,7 @@ void autonomous(void) {
 void usercontrol(void) {
   // User control code here, inside the loop
   vex::controller Controller;
-  Manual manual(&Controller, &MotorGroupLeft, &MotorGroupRight, &IntakeMotor, &LiftMotor, &ClawMotor);
-
+  Manual manual(&Brain, &Controller, &MotorGroupLeft, &MotorGroupRight, &IntakeMotor, &LiftMotor, &ClawMotor);
 
   while (1) {
     manual.Run();
@@ -94,7 +93,7 @@ int main() {
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
 
-  // Run the pre-autonomous function.
+  // Run the pre-autonomus function.
   pre_auton();
 
   // Prevent main from exiting with an infinite loop.

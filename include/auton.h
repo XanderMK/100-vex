@@ -3,7 +3,8 @@
 
 class Auton {
 public:
-    Auton(vex::motor_group* MotorGroupLeft, 
+    Auton(vex::brain* Brain,
+          vex::motor_group* MotorGroupLeft, 
           vex::motor_group* MotorGroupRight, 
           vex::motor* IntakeMotor, 
           vex::motor* LiftMotor,
@@ -11,8 +12,9 @@ public:
     ~Auton(void);
 
     void Run();
-private:
 
+private:
+    vex::brain* Brain;
     vex::controller* Controller;
     vex::motor_group* MotorGroupLeft;
     vex::motor_group* MotorGroupRight;

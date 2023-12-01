@@ -1,8 +1,8 @@
 {
 	"project": {
-		"name": "100-vex",
+		"name": "100_VEX_TCALC_Edition",
 		"slot": 1,
-		"description": "Empty V5 C++ Project",
+		"description": "100 VEX robot code for TCALC",
 		"platform": "V5",
 		"creationDate": "Wed, 11 Oct 2023 16:57:17 GMT",
 		"language": "cpp",
