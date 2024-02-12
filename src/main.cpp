@@ -26,10 +26,14 @@ vex::motor BackRight(vex::PORT9, true);
 vex::motor_group MotorGroupLeft(FrontLeft, BackLeft);
 vex::motor_group MotorGroupRight(FrontRight, BackRight);
 
-vex::motor IntakeMotor(vex::PORT5);
+vex::motor LauncherMotor1(vex::PORT5);
+vex::motor LauncherMotor2(vex::PORT8);
+vex::motor_group LauncherMotorGroup(LauncherMotor1, LauncherMotor2);
 
 vex::motor LiftMotor(vex::PORT4);
-vex::motor ClawMotor(vex::PORT6);
+vex::pneumatics ClawPiston(Brain.ThreeWirePort.G);
+
+vex::motor TheMechanism(vex::PORT20);
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -42,9 +46,7 @@ vex::motor ClawMotor(vex::PORT6);
 /*---------------------------------------------------------------------------*/
 
 void pre_auton(void) {
-
-  // All activities that occur before the competition starts
-  // Example: clearing encoders, setting servo positions, ...
+  // nope
 }
 
 /*---------------------------------------------------------------------------*/
@@ -58,7 +60,7 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  Auton auton(&Brain, &MotorGroupLeft, &MotorGroupRight, &IntakeMotor, &LiftMotor, &ClawMotor);
+  Auton auton(&Brain, &MotorGroupLeft, &MotorGroupRight, &LauncherMotorGroup, &LiftMotor, &ClawPiston);
   auton.Run();
 }
 
@@ -75,7 +77,7 @@ void autonomous(void) {
 void usercontrol(void) {
   // User control code here, inside the loop
   vex::controller Controller;
-  Manual manual(&Brain, &Controller, &MotorGroupLeft, &MotorGroupRight, &IntakeMotor, &LiftMotor, &ClawMotor);
+  Manual manual(&Brain, &Controller, &MotorGroupLeft, &MotorGroupRight, &LauncherMotorGroup, &LiftMotor, &ClawPiston, &TheMechanism);
 
   while (1) {
     manual.Run();

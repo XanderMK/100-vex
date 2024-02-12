@@ -7,9 +7,10 @@ public:
            vex::controller* Controller, 
            vex::motor_group* MotorGroupLeft, 
            vex::motor_group* MotorGroupRight, 
-           vex::motor* IntakeMotor, 
+           vex::motor_group* LauncherMotorGroup,
            vex::motor* LiftMotor,
-           vex::motor* ClawMotor);
+           vex::pneumatics* ClawPiston,
+           vex::motor* TheMechanism);
     ~Manual(void);
 
     void Run();
@@ -18,8 +19,9 @@ private:
     void Move();
     void ControlMotorGroup(vex::motor_group* MotorGroup, const vex::controller::axis& ControllerAxis);
     void SetDriveSpeed();
-    void ControlIntake();
+    void ControlLauncher();
     void ControlLift();
+    void ControlTheMechanism();
     void PrintOnBrain();
     void PrintOnController();
 
@@ -27,16 +29,19 @@ private:
     vex::controller* Controller;
     vex::motor_group* MotorGroupLeft;
     vex::motor_group* MotorGroupRight;
-    vex::motor* IntakeMotor;
+    vex::motor_group* LauncherMotorGroup;
     vex::motor* LiftMotor;
-    vex::motor* ClawMotor;
+    vex::pneumatics* ClawPiston;
+    vex::motor* TheMechanism;
 
     float currentDriveInterval = .5f;
     const float MaxDrivePercent = 1.f;
     const float MinDrivePercent = .25f;
     const int DriveIntervals = 4;
-    const int IntakeSpeedPercent = 100;
+    const float LauncherSpeedPercent = 52.5f;
 
     const float LiftSpeedPercentUp = 100.f;
     const float LiftSpeedPercentDown = 65.f;
+
+    bool HoldTheMechanism = false;
 };

@@ -4,14 +4,14 @@
 #include <cmath>
 
 Manual::Manual(vex::brain* Brain, vex::controller* Controller, vex::motor_group* MotorGroupLeft, vex::motor_group* MotorGroupRight, 
-               vex::motor* IntakeMotor, vex::motor* LiftMotor, vex::motor* ClawMotor)
+               vex::motor_group* LauncherMotorGroup, vex::motor* LiftMotor, vex::pneumatics* ClawPiston, vex::motor* TheMechanism)
     : Brain(Brain), Controller(Controller), MotorGroupLeft(MotorGroupLeft), MotorGroupRight(MotorGroupRight), 
-      IntakeMotor(IntakeMotor), LiftMotor(LiftMotor), ClawMotor(ClawMotor) {
-
-    IntakeMotor->setVelocity(IntakeSpeedPercent, vex::percent);
+      LauncherMotorGroup(LauncherMotorGroup), LiftMotor(LiftMotor), ClawPiston(ClawPiston), TheMechanism(TheMechanism) {
 
     Brain->Screen.clearScreen();
     Brain->Screen.setCursor(1, 1);
+
+    LauncherMotorGroup->setVelocity(LauncherSpeedPercent, vex::percent);
 }
 
 Manual::~Manual() = default;
@@ -19,8 +19,9 @@ Manual::~Manual() = default;
 void Manual::Run() {
     Move();
     SetDriveSpeed();
-    ControlIntake();
+    ControlLauncher();
     ControlLift();
+    ControlTheMechanism();
     PrintOnBrain();
     PrintOnController();
 }
@@ -71,47 +72,24 @@ void Manual::SetDriveSpeed() {
         currentDriveInterval = 0.f;
 }
 
-void Manual::ControlIntake() {
-  static bool buttonL1Latch = false;
+void Manual::ControlLauncher() {
   static bool buttonR1Latch = false;
 
-  static short currentIntakeState = 0; // 0 = off, 1 = in, 2 = out
-
-  if (Controller->ButtonL1.pressing() && !buttonL1Latch) {
-    if (currentIntakeState == 1) {
-      currentIntakeState = 0;
-    } else {
-      currentIntakeState = 1;
-    }
-
-    buttonL1Latch = true;
-  }
-  else if (!Controller->ButtonL1.pressing() && buttonL1Latch)
-    buttonL1Latch = false;
+  static bool intakeRunning;
 
   if (Controller->ButtonR1.pressing() && !buttonR1Latch) {
-    if (currentIntakeState == 2) {
-      currentIntakeState = 0;
-    } else {
-      currentIntakeState = 2;
-    }
+    intakeRunning = !intakeRunning;
 
     buttonR1Latch = true;
   }
   else if (!Controller->ButtonR1.pressing() && buttonR1Latch)
     buttonR1Latch = false;
 
-  // Move intake motor
-  switch (currentIntakeState) {
-    case 0:
-      IntakeMotor->stop();
-      break;
-    case 1:
-      IntakeMotor->spin(vex::forward);
-      break;
-    case 2:
-      IntakeMotor->spin(vex::reverse);
-      break;
+  if (intakeRunning) {
+    LauncherMotorGroup->spin(vex::forward);
+  }
+  else {
+    LauncherMotorGroup->stop();
   }
 }
 
@@ -126,23 +104,37 @@ void Manual::ControlLift() {
     LiftMotor->stop(vex::hold);
   }
 
-  if (Controller->ButtonA.pressing()) {
-    ClawMotor->spin(vex::forward);
+  if (Controller->ButtonA.pressing() && Controller->ButtonY.pressing()) {
+    ClawPiston->open();
   }
-  else if (Controller->ButtonY.pressing()) {
-    ClawMotor->spin(vex::reverse);
+  
+}
+
+void Manual::ControlTheMechanism() {
+  static bool buttonRightLatch = false;
+
+  // Toggle holding the motor in place. 
+  if (Controller->ButtonRight.pressing() && !buttonRightLatch) {
+        HoldTheMechanism = !HoldTheMechanism;
+        buttonRightLatch = true;
+  }
+  else if (!Controller->ButtonRight.pressing() && buttonRightLatch)
+      buttonRightLatch = false;
+
+
+  if (Controller->ButtonR2.pressing()) {
+    TheMechanism->spin(vex::forward, 100, vex::percent);
+  }
+  else if (Controller->ButtonL2.pressing()) {
+    TheMechanism->spin(vex::reverse, 100, vex::percent);
   }
   else {
-    ClawMotor->stop();
+    TheMechanism->stop(HoldTheMechanism ? vex::hold : vex::coast);
   }
 }
 
 void Manual::PrintOnBrain() {
-    Brain->Screen.clearScreen();
-    Brain->Screen.setCursor(1, 1);
-    Brain->Screen.print("Manual");
-    Brain->Screen.setCursor(2, 1);
-    Brain->Screen.print("Drive Speed: %f", currentDriveInterval);
+    Brain->Screen.clearScreen();  
 }
 
 void Manual::PrintOnController() {
@@ -155,7 +147,9 @@ void Manual::PrintOnController() {
 
     Controller->Screen.clearScreen();
     Controller->Screen.setCursor(1, 1);
-    Controller->Screen.print("Manual");
+    Controller->Screen.print("teeheehee! now");
     Controller->Screen.setCursor(2, 1);
     Controller->Screen.print("Drive Speed: %d%", int(round(currentDriveInterval * 100)));
+    Controller->Screen.setCursor(3, 1);
+    Controller->Screen.print("Holding: %s", HoldTheMechanism ? "true" : "false");
 }
