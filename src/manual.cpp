@@ -4,14 +4,18 @@
 #include <cmath>
 
 Manual::Manual(vex::brain* Brain, vex::controller* Controller, vex::motor_group* MotorGroupLeft, vex::motor_group* MotorGroupRight, 
-               vex::motor_group* LauncherMotorGroup, vex::motor* LiftMotor, vex::pneumatics* ClawPiston, vex::motor* TheMechanism)
-    : Brain(Brain), Controller(Controller), MotorGroupLeft(MotorGroupLeft), MotorGroupRight(MotorGroupRight), 
-      LauncherMotorGroup(LauncherMotorGroup), LiftMotor(LiftMotor), ClawPiston(ClawPiston), TheMechanism(TheMechanism) {
+               vex::motor* FirstStageLiftMotor, vex::motor* SecondStageLiftMotor, vex::motor* LiftRatchetMotor, vex::motor* LauncherMotor, vex::motor* WingMotor)
+    : Brain(Brain), Controller(Controller), MotorGroupLeft(MotorGroupLeft), MotorGroupRight(MotorGroupRight), FirstStageLiftMotor(FirstStageLiftMotor), 
+      SecondStageLiftMotor(SecondStageLiftMotor), LiftRatchetMotor(LiftRatchetMotor), LauncherMotor(LauncherMotor), WingMotor(WingMotor) {
+    
+    LauncherMotor->setVelocity(LauncherSpeedPercent, vex::percent);
+
+    FirstStageLiftMotor->setVelocity(100, vex::percent);
+    SecondStageLiftMotor->setVelocity(100, vex::percent);
+    LiftRatchetMotor->setVelocity(100, vex::percent);
 
     Brain->Screen.clearScreen();
     Brain->Screen.setCursor(1, 1);
-
-    LauncherMotorGroup->setVelocity(LauncherSpeedPercent, vex::percent);
 }
 
 Manual::~Manual() = default;
@@ -19,16 +23,25 @@ Manual::~Manual() = default;
 void Manual::Run() {
     Move();
     SetDriveSpeed();
-    ControlLauncher();
     ControlLift();
-    ControlTheMechanism();
     PrintOnBrain();
     PrintOnController();
 }
 
 void Manual::Move() {
+    SetDriveSpeed();
     ControlMotorGroup(MotorGroupLeft, Controller->Axis3);
     ControlMotorGroup(MotorGroupRight, Controller->Axis2);
+
+    ControlLift();
+    RatchetLiftDown();
+
+    SpinLauncher();
+
+    ControlWing();
+
+    PrintOnBrain();
+    PrintOnController();
 }
 
 void Manual::ControlMotorGroup(vex::motor_group* MotorGroup, const vex::controller::axis& ControllerAxis) {
@@ -72,69 +85,101 @@ void Manual::SetDriveSpeed() {
         currentDriveInterval = 0.f;
 }
 
-void Manual::ControlLauncher() {
-  static bool buttonR1Latch = false;
-
-  static bool intakeRunning;
-
-  if (Controller->ButtonR1.pressing() && !buttonR1Latch) {
-    intakeRunning = !intakeRunning;
-
-    buttonR1Latch = true;
-  }
-  else if (!Controller->ButtonR1.pressing() && buttonR1Latch)
-    buttonR1Latch = false;
-
-  if (intakeRunning) {
-    LauncherMotorGroup->spin(vex::forward);
-  }
-  else {
-    LauncherMotorGroup->stop();
-  }
-}
-
 void Manual::ControlLift() {
-  if (Controller->ButtonX.pressing()) {
-    LiftMotor->spin(vex::forward, LiftSpeedPercentUp, vex::percent);
-  }
-  else if (Controller->ButtonB.pressing()) {
-    LiftMotor->spin(vex::reverse, LiftSpeedPercentDown, vex::percent);
-  }
-  else {
-    LiftMotor->stop(vex::hold);
-  }
+    if (Controller->ButtonL1.pressing() && !isLiftBeingUsed) {
+        RaiseLift();
+    }
 
-  if (Controller->ButtonA.pressing() && Controller->ButtonY.pressing()) {
-    ClawPiston->open();
-  }
-  
+    else if (Controller->ButtonL2.pressing() && !isLiftBeingUsed) {
+        LowerLift();
+    }
 }
 
-void Manual::ControlTheMechanism() {
-  static bool buttonRightLatch = false;
+void Manual::RaiseLift() {
+    isLiftBeingUsed = true;
 
-  // Toggle holding the motor in place. 
-  if (Controller->ButtonRight.pressing() && !buttonRightLatch) {
-        HoldTheMechanism = !HoldTheMechanism;
-        buttonRightLatch = true;
-  }
-  else if (!Controller->ButtonRight.pressing() && buttonRightLatch)
-      buttonRightLatch = false;
+    FirstStageLiftMotor->spinToPosition(195, vex::rotationUnits::deg, 50, vex::velocityUnits::pct, false);
+    SecondStageLiftMotor->spinToPosition(170, vex::rotationUnits::deg, 30, vex::velocityUnits::pct, false);
 
+    isLiftBeingUsed = false;
+}
 
-  if (Controller->ButtonR2.pressing()) {
-    TheMechanism->spin(vex::forward, 100, vex::percent);
-  }
-  else if (Controller->ButtonL2.pressing()) {
-    TheMechanism->spin(vex::reverse, 100, vex::percent);
-  }
-  else {
-    TheMechanism->stop(HoldTheMechanism ? vex::hold : vex::coast);
-  }
+void Manual::LowerLift() {
+    isLiftBeingUsed = true;
+
+    FirstStageLiftMotor->spinToPosition(0, vex::rotationUnits::deg, 50, vex::velocityUnits::pct, false);
+    SecondStageLiftMotor->spinToPosition(0, vex::rotationUnits::deg, 30, vex::velocityUnits::pct, false);
+
+    isLiftBeingUsed = false;
+}
+
+void Manual::RatchetLiftDown() {
+    if (Controller->ButtonY.pressing() && Controller->ButtonA.pressing()) {
+        FirstStageLiftMotor->stop(vex::coast);
+        SecondStageLiftMotor->stop(vex::coast);
+
+        LiftRatchetMotor->spin(vex::forward);
+    }
+    else {
+        LiftRatchetMotor->stop(vex::coast);
+    
+    }
+    
+}
+
+void Manual::SpinLauncher() {
+    static bool launcherToggle = false;
+    static bool r1Latch = false;
+
+    if (Controller->ButtonR1.pressing() && !r1Latch) {
+        launcherToggle = !launcherToggle;
+        r1Latch = true;
+    }
+    else if (!Controller->ButtonR1.pressing() && r1Latch){
+        r1Latch = false;
+    }
+
+    if (launcherToggle) {
+        LauncherMotor->spin(vex::forward);
+    }
+    else {
+        LauncherMotor->stop(vex::coast);
+    }
+    
+}
+
+void Manual::ControlWing() {
+    static bool wingToggle = false;
+    static bool r2Latch = false;
+
+    if (Controller->ButtonR2.pressing() && !r2Latch) {
+        wingToggle = !wingToggle;
+        r2Latch = true;
+    }
+    else if (!Controller->ButtonR2.pressing() && r2Latch){
+        r2Latch = false;
+    }
+
+    if (wingToggle) {
+        WingMotor->spinToPosition(120, vex::rotationUnits::deg, 50, vex::velocityUnits::pct, false);
+    }
+    else {
+        WingMotor->spinToPosition(0, vex::rotationUnits::deg, 50, vex::velocityUnits::pct, false);
+    }
 }
 
 void Manual::PrintOnBrain() {
-    Brain->Screen.clearScreen();  
+    Brain->Screen.clearScreen();
+
+    Brain->Screen.setCursor(1, 1);
+    Brain->Screen.setFont(vex::fontType::mono12);
+    Brain->Screen.print("Drive Speed: %d%", int(round(currentDriveInterval * 100)));
+    Brain->Screen.setCursor(2, 1);
+    Brain->Screen.setFont(vex::fontType::mono60);
+    Brain->Screen.print("it's time to vex");
+    Brain->Screen.setCursor(3, 1);
+    Brain->Screen.setFont(vex::fontType::mono20);
+    Brain->Screen.print("Flywheel temp: %dº C", int(round(LauncherMotor->temperature(vex::temperatureUnits::celsius))));
 }
 
 void Manual::PrintOnController() {
@@ -150,6 +195,4 @@ void Manual::PrintOnController() {
     Controller->Screen.print("teeheehee! now");
     Controller->Screen.setCursor(2, 1);
     Controller->Screen.print("Drive Speed: %d%", int(round(currentDriveInterval * 100)));
-    Controller->Screen.setCursor(3, 1);
-    Controller->Screen.print("Holding: %s", HoldTheMechanism ? "true" : "false");
 }

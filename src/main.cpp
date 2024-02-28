@@ -18,22 +18,23 @@ vex::competition Competition;
 
 vex::brain Brain;
 
-vex::motor FrontLeft(vex::PORT2);
-vex::motor FrontRight(vex::PORT1, true);
-vex::motor BackLeft(vex::PORT10);
-vex::motor BackRight(vex::PORT9, true);
+vex::motor LeftFront(vex::PORT19, true);
+vex::motor LeftBack(vex::PORT20, true);
 
-vex::motor_group MotorGroupLeft(FrontLeft, BackLeft);
-vex::motor_group MotorGroupRight(FrontRight, BackRight);
+vex::motor RightFront(vex::PORT11);
+vex::motor RightBack(vex::PORT12);
 
-vex::motor LauncherMotor1(vex::PORT5);
-vex::motor LauncherMotor2(vex::PORT8);
-vex::motor_group LauncherMotorGroup(LauncherMotor1, LauncherMotor2);
+vex::motor_group MotorGroupLeft(LeftFront, LeftBack);
+vex::motor_group MotorGroupRight(RightFront, RightBack);
 
-vex::motor LiftMotor(vex::PORT4);
-vex::pneumatics ClawPiston(Brain.ThreeWirePort.G);
+vex::motor FirstStageLiftMotor(vex::PORT15, true);
+vex::motor SecondStageLiftMotor(vex::PORT14);
+vex::motor LiftRatchetMotor(vex::PORT13);
 
-vex::motor TheMechanism(vex::PORT20);
+vex::motor LauncherMotor(vex::PORT16);
+vex::motor WingMotor(vex::PORT17);
+
+vex::inertial InertialSensor(vex::PORT18);
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -46,7 +47,8 @@ vex::motor TheMechanism(vex::PORT20);
 /*---------------------------------------------------------------------------*/
 
 void pre_auton(void) {
-  // nope
+  FirstStageLiftMotor.resetPosition();
+  SecondStageLiftMotor.resetPosition();
 }
 
 /*---------------------------------------------------------------------------*/
@@ -60,7 +62,7 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  Auton auton(&Brain, &MotorGroupLeft, &MotorGroupRight, &LauncherMotorGroup, &LiftMotor, &ClawPiston);
+  Auton auton(&Brain, &MotorGroupLeft, &MotorGroupRight, &LauncherMotor, &WingMotor, &InertialSensor);
   auton.Run();
 }
 
@@ -77,7 +79,8 @@ void autonomous(void) {
 void usercontrol(void) {
   // User control code here, inside the loop
   vex::controller Controller;
-  Manual manual(&Brain, &Controller, &MotorGroupLeft, &MotorGroupRight, &LauncherMotorGroup, &LiftMotor, &ClawPiston, &TheMechanism);
+  Manual manual(&Brain, &Controller, &MotorGroupLeft, &MotorGroupRight, &FirstStageLiftMotor, 
+                &SecondStageLiftMotor, &LiftRatchetMotor, &LauncherMotor, &WingMotor);
 
   while (1) {
     manual.Run();

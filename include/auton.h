@@ -6,9 +6,10 @@ public:
     Auton(vex::brain* Brain,
           vex::motor_group* MotorGroupLeft, 
           vex::motor_group* MotorGroupRight, 
-          vex::motor_group* LauncherMotorGroup, 
-          vex::motor* LiftMotor,
-          vex::pneumatics* ClawPiston);
+          vex::motor* LauncherMotor,
+          vex::motor* WingMotor,
+          vex::inertial* InertialSensor
+         );
     ~Auton(void);
 
     void Run();
@@ -18,9 +19,9 @@ private:
     vex::controller* Controller;
     vex::motor_group* MotorGroupLeft;
     vex::motor_group* MotorGroupRight;
-    vex::motor_group* LauncherMotorGroup;
-    vex::motor* LiftMotor;
-    vex::pneumatics* ClawPiston;
+    vex::motor* LauncherMotor;
+    vex::motor* WingMotor;
+    vex::inertial* InertialSensor;
 
-    const float LauncherSpeedPercent = 52.5f;
+    const float LauncherSpeedPercent = 80.f;
 };

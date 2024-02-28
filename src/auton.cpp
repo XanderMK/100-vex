@@ -1,104 +1,59 @@
 #include "auton.h"
 
 Auton::Auton(vex::brain* Brain, vex::motor_group* MotorGroupLeft, vex::motor_group* MotorGroupRight,
-             vex::motor_group* LauncherMotorGroup, vex::motor* LiftMotor, vex::pneumatics* ClawPiston)
+             vex::motor* LauncherMotor, vex::motor* WingMotor, vex::inertial* InertialSensor)
    : Brain(Brain), MotorGroupLeft(MotorGroupLeft), MotorGroupRight(MotorGroupRight),
-     LauncherMotorGroup(LauncherMotorGroup), LiftMotor(LiftMotor), ClawPiston(ClawPiston) {}
+     LauncherMotor(LauncherMotor), WingMotor(WingMotor), InertialSensor(InertialSensor) {}
 
 Auton::~Auton() = default;
 
 
 
-#define _SKILLS
+#define _MATCH_LOAD
 
 
 
 void Auton::Run() {
   vex::drivetrain Drivetrain(*MotorGroupLeft, *MotorGroupRight);
+  Drivetrain.setGearRatio(2. + (1. / 3.));
+
+  InertialSensor->calibrate();
+  while (InertialSensor->isCalibrating()) {
+    vex::task::sleep(100);
+  }
+
+  InertialSensor->setHeading(45, vex::degrees);
 
 #ifdef _SKILLS
-    LauncherMotorGroup->setVelocity(LauncherSpeedPercent, vex::percent);
-    LauncherMotorGroup->spin(vex::forward);
+    LauncherMotor->setVelocity(LauncherSpeedPercent, vex::percent);
+    LauncherMotor->spin(vex::forward);
 #endif
 
 #ifdef _NO_MATCH_LOAD
-    Drivetrain.setDriveVelocity(50, vex::percent);
-    Drivetrain.setTurnVelocity(50, vex::percent);
+    Drivetrain.setDriveVelocity(100, vex::percent);
+    Drivetrain.setTurnVelocity(25, vex::percent);
 
-    // Drive away from wall to orient
-    Drivetrain.drive(vex::reverse);
-    wait(0.5, vex::seconds);
-    Drivetrain.stop();
-
-    // Turn to face the goal
-    Drivetrain.turnFor(vex::right, 50, vex::degrees);
-
-    // Drives ball into the goal
-    Drivetrain.drive(vex::reverse);
-    wait(1.7, vex::seconds);
-    Drivetrain.stop();
-
-    // Move back from the goal
-    Drivetrain.drive(vex::forward);
-    wait(0.7, vex::seconds);
-    Drivetrain.stop();
+    Drivetrain.driveFor(72, vex::inches);
 #endif
 
 #ifdef _MATCH_LOAD
-    Drivetrain.setDriveVelocity(50, vex::percent);
-    Drivetrain.setTurnVelocity(50, vex::percent);
-
+    Drivetrain.setDriveVelocity(40, vex::percent);
+    Drivetrain.setTurnVelocity(40, vex::percent);
+    Drivetrain.setStopping(vex::brakeType::hold);
     Drivetrain.driveFor(vex::reverse, 6, vex::inches);
-    Drivetrain.driveFor(vex::forward, 6, vex::inches);
-
-/*
-    
-
-    // Drive away from wall to orient
-    Drivetrain.drive(vex::reverse);
-    wait(0.5, vex::seconds);
     Drivetrain.stop();
-
-    // Turn to face the goal
-    Drivetrain.turnFor(vex::left, 50, vex::degrees);
-
-    // Drives ball into the goal
-    Drivetrain.drive(vex::reverse);
-    wait(1.7, vex::seconds);
+    WingMotor->spinToPosition(120, vex::degrees);
+    Drivetrain.turnFor(-124, vex::degrees); // Compensating for weird turn inconsistensies
     Drivetrain.stop();
-
-    // Move back from the goal
-    Drivetrain.drive(vex::forward);
-    wait(0.7, vex::seconds);
+    WingMotor->spinToPosition(0, vex::degrees);
+    Drivetrain.setDriveVelocity(10, vex::percent);
+    Drivetrain.driveFor(2, vex::inches);
     Drivetrain.stop();
-
-    // Turn around
-    Drivetrain.turnFor(vex::right, 180, vex::degrees);
-
-    // Drive in small increments while turning to get in between the wall and the elevation bar
-    Drivetrain.drive(vex::reverse);
-    wait(0.75, vex::seconds);
+    Drivetrain.setDriveVelocity(40, vex::percent);
+    Drivetrain.turnFor(85, vex::degrees);
     Drivetrain.stop();
+    Drivetrain.driveFor(48, vex::inches);
 
-    Drivetrain.turnFor(vex::left, 25, vex::degrees);
-
-    Drivetrain.drive(vex::reverse);
-    wait(0.5, vex::seconds);
-    Drivetrain.stop();
-
-    Drivetrain.turnFor(vex::left, 25, vex::degrees);
-
-    Drivetrain.drive(vex::reverse);
-    wait(0.5, vex::seconds);
-    Drivetrain.stop();
-
-    Drivetrain.turnFor(vex::left, 19, vex::degrees);
-
-    // Drive into the elevation bar
-    Drivetrain.drive(vex::reverse);
-    wait(2, vex::seconds);
-    Drivetrain.stop();
-*/
 #endif
    
 }
