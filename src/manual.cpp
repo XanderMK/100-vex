@@ -54,7 +54,7 @@ void Manual::ControlMotorGroup(vex::motor_group* MotorGroup, const vex::controll
         MotorGroup->setVelocity(std::abs(motorGroupSpeed), vex::percent);
         MotorGroup->spin(driveReverse ? vex::reverse : vex::forward);
     } else {
-        MotorGroup->stop();
+        MotorGroup->stop(vex::brake);
     }
 }
 
@@ -67,6 +67,8 @@ void Manual::SetDriveSpeed() {
     if (Controller->ButtonUp.pressing() && !buttonUpLatch) {
         currentDriveInterval += 1.f / DriveIntervals;
         buttonUpLatch = true;
+
+        Controller->rumble("..");
     }
     else if (!Controller->ButtonUp.pressing() && buttonUpLatch)
         buttonUpLatch = false;
@@ -75,6 +77,8 @@ void Manual::SetDriveSpeed() {
     if (Controller->ButtonDown.pressing() && !buttonDownLatch) {
         currentDriveInterval -= 1.f / DriveIntervals;
         buttonDownLatch = true;
+
+        Controller->rumble("..");
     }
     else if (!Controller->ButtonDown.pressing() && buttonDownLatch)
         buttonDownLatch = false;
@@ -119,10 +123,11 @@ void Manual::RatchetLiftDown() {
         SecondStageLiftMotor->stop(vex::coast);
 
         LiftRatchetMotor->spin(vex::forward);
+
+        Controller->rumble("- ");
     }
     else {
         LiftRatchetMotor->stop(vex::coast);
-    
     }
     
 }
@@ -134,6 +139,13 @@ void Manual::SpinLauncher() {
     if (Controller->ButtonR1.pressing() && !r1Latch) {
         launcherToggle = !launcherToggle;
         r1Latch = true;
+
+        if (launcherToggle) {
+            Controller->rumble("..-");
+        }
+        else {
+            Controller->rumble("-..");
+        }
     }
     else if (!Controller->ButtonR1.pressing() && r1Latch){
         r1Latch = false;
@@ -155,6 +167,8 @@ void Manual::ControlWing() {
     if (Controller->ButtonR2.pressing() && !r2Latch) {
         wingToggle = !wingToggle;
         r2Latch = true;
+
+        Controller->rumble(".");
     }
     else if (!Controller->ButtonR2.pressing() && r2Latch){
         r2Latch = false;

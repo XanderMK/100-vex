@@ -7,8 +7,6 @@
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
-#define _DEBUG
-
 #include "vex.h"
 #include "auton.h" 
 #include "manual.h"
